@@ -1,0 +1,237 @@
+@startuml Olympic_Package_Diagram
+
+!define CLASS_BG_COLOR #E8F4F8
+!define ENUM_BG_COLOR #FFF4E6
+!define ABSTRACT_BG_COLOR #F0F0F0
+
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FEFEFE
+skinparam class {
+    BackgroundColor CLASS_BG_COLOR
+    BorderColor #2C3E50
+    ArrowColor #34495E
+    FontSize 12
+    FontName Arial
+}
+
+skinparam package {
+    BackgroundColor #E8F5E9
+    BorderColor #388E3C
+    FontSize 13
+    FontStyle bold
+}
+
+skinparam note {
+    BackgroundColor #FFFACD
+    BorderColor #DAA520
+}
+
+title Olympic Management System - Package Diagram\n
+
+' ==================== PACKAGE: ENUMS ====================
+
+package "enums" #FFEBEE {
+    enum MedalType <<enumeration>> {
+        GOLD
+        SILVER
+        BRONZE
+    }
+
+    enum CompetitionStatus <<enumeration>> {
+        SCHEDULED
+        IN_PROGRESS
+        COMPLETED
+        CANCELLED
+    }
+}
+
+' ==================== PACKAGE: PARTICIPANTS ====================
+
+package "participants" #E3F2FD {
+    class Country {
+        - countryId: String
+        - name: String
+        - code: String
+        - flag: String
+        - totalGoldMedals: int
+        - totalSilverMedals: int
+        - totalBronzeMedals: int
+        --
+        + Country(name: String, code: String)
+        + addMedal(type: MedalType): void
+        + getTotalMedals(): int
+        + getMedalRanking(): int
+        + getAthletes(): List<Athlete>
+        + generateMedalReport(): Report
+    }
+
+    class Athlete {
+        - athleteId: String
+        - name: String
+        - birthDate: Date
+        - gender: String
+        - email: String
+        - phone: String
+        --
+        + Athlete(name: String, country: Country)
+        + registerForCompetition(competition: Competition): Registration
+        + getCompetitions(): List<Competition>
+        + getMedals(): List<Medal>
+        + getCountry(): Country
+        + getTotalMedals(): int
+    }
+}
+
+' ==================== PACKAGE: COMPETITIONS ====================
+
+package "competitions" #FFF3E0 {
+    class Competition {
+        - competitionId: String
+        - sportName: String
+        - modality: String
+        - scheduledDate: Date
+        - scheduledTime: Time
+        - status: CompetitionStatus
+        - maxParticipants: int
+        --
+        + Competition(sportName: String, modality: String)
+        + setVenue(venue: Venue): boolean
+        + addAthlete(athlete: Athlete): Registration
+        + removeAthlete(athlete: Athlete): boolean
+        + validateSchedule(): boolean
+        + startCompetition(): void
+        + finishCompetition(): void
+        + getRegisteredAthletes(): List<Athlete>
+        + hasScheduleConflict(): boolean
+    }
+
+    class Registration {
+        - registrationId: String
+        - registrationDate: Date
+        - status: String
+        - participationNumber: int
+        --
+        + Registration(athlete: Athlete, competition: Competition)
+        + confirm(): void
+        + cancel(): void
+        + isValid(): boolean
+        + validateCountryRepresentation(): boolean
+    }
+}
+
+' ==================== PACKAGE: INFRASTRUCTURE ====================
+
+package "infrastructure" #F3E5F5 {
+    class Venue {
+        - venueId: String
+        - name: String
+        - address: String
+        - capacity: int
+        - facilities: String
+        - type: String
+        --
+        + Venue(name: String, capacity: int)
+        + isAvailable(date: Date, time: Time): boolean
+        + checkScheduleConflict(competition: Competition): boolean
+        + getCompetitionsSchedule(): List<Competition>
+        + allocateCompetition(competition: Competition): boolean
+        + getAvailableSlots(date: Date): List<TimeSlot>
+    }
+
+    class Schedule {
+        - scheduleId: String
+        - startDate: Date
+        - endDate: Date
+        --
+        + Schedule()
+        + addCompetition(competition: Competition): boolean
+        + checkConflicts(): List<Conflict>
+        + getCompetitionsByDate(date: Date): List<Competition>
+        + getCompetitionsByVenue(venue: Venue): List<Competition>
+        + validateAllocation(): boolean
+    }
+}
+
+' ==================== PACKAGE: RESULTS ====================
+
+package "results" #E0F2F1 {
+    class Result {
+        - resultId: String
+        - position: int
+        - score: double
+        - time: Time
+        - recordDate: Date
+        - notes: String
+        --
+        + Result(competition: Competition, athlete: Athlete)
+        + setPosition(position: int): void
+        + setScore(score: double): void
+        + isWinner(): boolean
+        + isPodium(): boolean
+        + generateMedal(): Medal
+    }
+
+    class Medal {
+        - medalId: String
+        - type: MedalType
+        - awardDate: Date
+        - ceremony: String
+        --
+        + Medal(type: MedalType, athlete: Athlete)
+        + getMedalType(): MedalType
+        + getAthlete(): Athlete
+        + getCompetition(): Competition
+    }
+}
+
+' ==================== PACKAGE: REPORTS ====================
+
+package "reports" #FFF9C4 {
+    class MedalReport {
+        - reportId: String
+        - generationDate: Date
+        - reportType: String
+        --
+        + MedalReport()
+        + generateCountryRanking(): List<Country>
+        + generateAthleteRanking(): List<Athlete>
+        + getTotalMedalsByCountry(country: Country): int
+        + exportToFile(format: String): File
+        + calculateStatistics(): Statistics
+    }
+}
+
+' ==================== RELATIONSHIPS ====================
+
+Country "1" -- "0..*" Athlete : represents >
+Country "1" -- "0..*" Medal : earns >
+
+Athlete "1" -- "0..*" Registration : creates >
+Athlete "1" -- "0..*" Medal : wins >
+Athlete "1" -- "0..*" Result : achieves >
+
+Competition "1" *-- "0..*" Registration : contains >
+Competition "1" -- "0..1" Venue : takes place at >
+Competition "1" *-- "0..*" Result : generates >
+Competition "1" -- "1" Schedule : scheduled in >
+
+Registration "1" -- "1" Athlete : involves >
+Registration "1" -- "1" Competition : for >
+
+Result "1" -- "1" Athlete : belongs to >
+Result "1" -- "1" Competition : from >
+Result "0..1" -- "0..1" Medal : awards >
+
+Medal "1" -- "1" Athlete : awarded to >
+Medal "1" -- "1" Competition : from >
+Medal "1" -- "1" MedalType : of type >
+
+Venue "1" -- "0..*" Competition : hosts >
+Venue "1" -- "1" Schedule : managed by >
+
+MedalReport "1" ..> "0..*" Country : analyzes >
+MedalReport "1" ..> "0..*" Medal : summarizes >
+
+Schedule "1" o-- "0..*" Competition : organizes >
+
+@enduml

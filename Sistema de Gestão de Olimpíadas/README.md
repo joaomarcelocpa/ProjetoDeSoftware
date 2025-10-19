@@ -14,7 +14,7 @@ Este repositório contém a documentação completa e os principais diagramas UM
 
 Representa as principais funcionalidades do sistema e a interação dos usuários com essas funcionalidades.
 
-![Diagrama de Casos de Uso](./Diagrama%20de%20Casos%20de%20Uso.jpeg)
+![Diagrama de Casos de Uso](./Imagens/Diagrama%20de%20Casos%20de%20Uso.jpeg)
 
 ---
 
@@ -22,7 +22,7 @@ Representa as principais funcionalidades do sistema e a interação dos usuário
 
 Estrutura detalhada das classes do sistema, seus atributos, métodos e relacionamentos, organizados em pacotes lógicos.
 
-![Diagrama de Classes com Pacotes](./Diagrama%20de%20Classes%20com%20Pacotes.jpeg)
+![Diagrama de Classes com Pacotes](./Imagens/Diagrama%20de%20Classes%20com%20Pacotes.jpeg)
 
 ---
 
@@ -30,7 +30,7 @@ Estrutura detalhada das classes do sistema, seus atributos, métodos e relaciona
 
 Visualização da organização dos componentes do sistema e suas dependências.
 
-![Diagrama de Componentes](./Diagrama%20de%20Componentes.jpeg)
+![Diagrama de Componentes](./Imagens/Diagrama%20de%20Componentes.jpeg)
 
 ---
 
@@ -38,7 +38,7 @@ Visualização da organização dos componentes do sistema e suas dependências.
 
 Representa a infraestrutura física e a distribuição dos componentes nos nós de hardware.
 
-![Diagrama de Implantação](./Diagrama%20de%20Implantação.jpeg)
+![Diagrama de Implantação](./Imagens/Diagrama%20de%20Implantação.jpeg)
 
 ---
 

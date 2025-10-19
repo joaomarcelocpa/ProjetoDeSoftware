@@ -1,0 +1,78 @@
+@startuml
+title Diagrama de Componentes - Sistema de Gestão das Olimpíadas (SGO)
+
+' --- FRONTEND ---
+package "Frontend Web" {
+    [Interface Web]
+}
+
+' --- BACKEND ---
+package "API Backend" {
+    package "Controllers" {
+        [CompeticaoController]
+        [AtletaController]
+        [LocalController]
+        [ResultadoController]
+        [RelatorioController]
+    }
+
+    package "Services" {
+        [CompeticaoService]
+        [AtletaService]
+        [LocalService]
+        [ResultadoService]
+        [RelatorioService]
+    }
+
+    package "Repositories" {
+        [CompeticaoRepository]
+        [AtletaRepository]
+        [LocalRepository]
+        [ResultadoRepository]
+        [PaisRepository]
+    }
+
+    package "Models" {
+        [Competicao]
+        [Atleta]
+        [Local]
+        [Resultado]
+        [Pais]
+    }
+}
+
+' --- BANCO DE DADOS ---
+package "Database" {
+    [PostgreSQL]
+}
+
+' --- RELAÇÕES FRONTEND -> BACKEND ---
+[Interface Web] --> [CompeticaoController] : REST API
+[Interface Web] --> [AtletaController] : REST API
+[Interface Web] --> [LocalController] : REST API
+[Interface Web] --> [ResultadoController] : REST API
+[Interface Web] --> [RelatorioController] : REST API
+
+' --- RELAÇÕES MVC DENTRO DA API ---
+[CompeticaoController] --> [CompeticaoService]
+[AtletaController] --> [AtletaService]
+[LocalController] --> [LocalService]
+[ResultadoController] --> [ResultadoService]
+[RelatorioController] --> [RelatorioService]
+
+[CompeticaoService] --> [CompeticaoRepository]
+[AtletaService] --> [AtletaRepository]
+[LocalService] --> [LocalRepository]
+[ResultadoService] --> [ResultadoRepository]
+[RelatorioService] --> [CompeticaoRepository]
+[RelatorioService] --> [ResultadoRepository]
+[RelatorioService] --> [PaisRepository]
+
+' --- REPOSITORIES -> DB ---
+[CompeticaoRepository] --> [PostgreSQL]
+[AtletaRepository] --> [PostgreSQL]
+[LocalRepository] --> [PostgreSQL]
+[ResultadoRepository] --> [PostgreSQL]
+[PaisRepository] --> [PostgreSQL]
+
+@enduml
