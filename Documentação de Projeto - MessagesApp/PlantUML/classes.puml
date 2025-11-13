@@ -1,0 +1,169 @@
+@startuml
+title Diagrama de Classes - Sistema de Recados
+
+!define LAYOUT top to bottom direction
+
+class Pessoa {
+    - id: number
+    - nome: string
+    - email: string
+    - passwordHash: string
+    - fotoPerfil: string
+    - bio: text
+    - ativo: boolean
+    - createdAt: Date
+    - updatedAt: Date
+    --
+    + criar(nome: string, email: string, password: string): Pessoa
+    + editar(nome: string, password: string): void
+    + excluir(): void
+    + buscarPorId(id: number): Pessoa
+    + listarTodas(): Pessoa[]
+    + validarEmail(email: string): boolean
+}
+
+class Recado {
+    - id: number
+    - texto: string
+    - lido: boolean
+    - prioridade: string
+    - arquivado: boolean
+    - data: Date
+    - createdAt: Date
+    - updatedAt: Date
+    --
+    + criar(texto: string, deId: number, paraId: number, prioridade: string): Recado
+    + editar(texto: string, lido: boolean): void
+    + excluir(): void
+    + buscarPorId(id: number): Recado
+    + listarTodos(): Recado[]
+    + marcarComoLido(): void
+    + marcarComoNaoLido(): void
+    + responder(texto: string): Recado
+    + filtrarPorStatus(lido: boolean): Recado[]
+    + filtrarPorPrioridade(prioridade: string): Recado[]
+    + enviarParaMultiplos(destinatarios: number[]): Recado[]
+}
+
+class Categoria {
+    - id: number
+    - nome: string
+    - cor: string
+    - icone: string
+    - descricao: text
+    - createdAt: Date
+    --
+    + criar(nome: string, cor: string): Categoria
+    + editar(nome: string, cor: string): void
+    + excluir(): void
+    + listarTodas(): Categoria[]
+}
+
+class Curtida {
+    - id: number
+    - recadoId: number
+    - pessoaId: number
+    - createdAt: Date
+    --
+    + curtir(recadoId: number, pessoaId: number): Curtida
+    + descurtir(id: number): void
+    + verificarCurtida(recadoId: number, pessoaId: number): boolean
+    + listarPorRecado(recadoId: number): Curtida[]
+}
+
+class Notificacao {
+    - id: number
+    - pessoaId: number
+    - recadoId: number
+    - tipo: string
+    - lida: boolean
+    - mensagem: text
+    - createdAt: Date
+    --
+    + criar(pessoaId: number, recadoId: number, tipo: string): Notificacao
+    + marcarComoLida(id: number): void
+    + listarNaoLidas(pessoaId: number): Notificacao[]
+    + excluir(id: number): void
+}
+
+class Dashboard {
+    --
+    + obterEstatisticas(): DashboardStats
+    + calcularCrescimento(): GrowthStats
+    + buscarRecadosRecentes(limite: number): Recado[]
+    + gerarRelatorio(periodo: string): Relatorio
+    + exportarDados(formato: string): File
+    + obterUsuariosAtivos(): Pessoa[]
+}
+
+class DashboardStats {
+    + totalRecados: number
+    + pessoasCadastradas: number
+    + recadosHoje: number
+    + recadosNaoLidos: number
+}
+
+class GrowthStats {
+    + recadosGrowth: number
+    + pessoasGrowth: number
+}
+
+class Relatorio {
+    + periodo: string
+    + dados: object
+    + dataGeracao: Date
+    --
+    + gerar(): void
+    + exportarPDF(): File
+    + exportarCSV(): File
+}
+
+enum Prioridade {
+    NORMAL
+    IMPORTANTE
+    URGENTE
+}
+
+' Relacionamentos principais
+Pessoa "1" -- "N" Recado : envia >
+Pessoa "1" -- "N" Recado : recebe >
+Recado "N" -- "1" Categoria : possui >
+Recado "1" -- "N" Curtida : recebe >
+Pessoa "1" -- "N" Curtida : faz >
+Pessoa "1" -- "N" Notificacao : recebe >
+Recado "1" -- "N" Notificacao : gera >
+Recado "0..1" -- "N" Recado : respostaA >
+Recado -- Prioridade : possui >
+
+' Relacionamentos do Dashboard
+Dashboard ..> DashboardStats : retorna
+Dashboard ..> GrowthStats : retorna
+Dashboard ..> Relatorio : gera
+Dashboard ..> Pessoa : consulta
+Dashboard ..> Recado : consulta
+
+note right of Pessoa
+  Representa os usuários
+  do sistema. Pode enviar
+  e receber recados
+end note
+
+note right of Recado
+  Mensagens trocadas entre
+  pessoas. Pode ter prioridade,
+  categoria e ser respondido
+end note
+
+note bottom of Curtida
+  Registra curtidas de
+  destinatários em recados
+  (evita duplicatas)
+end note
+
+note bottom of Notificacao
+  Avisos para usuários sobre
+  novos recados, respostas
+  e curtidas
+end note
+
+@enduml

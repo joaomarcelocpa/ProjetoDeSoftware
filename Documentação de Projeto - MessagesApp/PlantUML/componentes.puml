@@ -1,0 +1,81 @@
+@startuml
+title Diagrama de Componentes - Sistema de Recados (Messages App)
+
+package "Frontend Web" {
+    component "Interface Web" <<component>> as InterfaceWeb
+}
+
+package "API Backend" {
+
+    package "Controllers" {
+        component "PessoasController" <<component>> as PessoasCtrl
+        component "RecadosController" <<component>> as RecadosCtrl
+    }
+
+    package "Services" {
+        component "PessoasService" <<component>> as PessoasSvc
+        component "RecadosService" <<component>> as RecadosSvc
+    }
+
+    package "Repositories" {
+        component "PessoaRepository" <<component>> as PessoaRepo
+        component "RecadoRepository" <<component>> as RecadoRepo
+    }
+
+    package "Models" {
+        component "Pessoa" <<entity>> as PessoaEntity
+        component "Recado" <<entity>> as RecadoEntity
+        component "CreatePessoaDto" <<dto>> as CreatePessoaDto
+        component "UpdatePessoaDto" <<dto>> as UpdatePessoaDto
+        component "CreateRecadoDto" <<dto>> as CreateRecadoDto
+        component "UpdateRecadoDto" <<dto>> as UpdateRecadoDto
+    }
+}
+
+package "Database" {
+    database "PostgreSQL" <<database>> as DB
+}
+
+' Conexões Frontend -> Controllers
+InterfaceWeb --> PessoasCtrl : REST API
+InterfaceWeb --> RecadosCtrl : REST API
+
+' Conexões Controllers -> Services
+PessoasCtrl --> PessoasSvc
+RecadosCtrl --> RecadosSvc
+
+' Conexões Controllers -> DTOs
+PessoasCtrl ..> CreatePessoaDto : <<uses>>
+PessoasCtrl ..> UpdatePessoaDto : <<uses>>
+RecadosCtrl ..> CreateRecadoDto : <<uses>>
+RecadosCtrl ..> UpdateRecadoDto : <<uses>>
+
+' Conexões Services -> Repositories
+PessoasSvc --> PessoaRepo
+RecadosSvc --> RecadoRepo
+
+' Conexão RecadosService -> PessoasService (validação de remetente/destinatário)
+RecadosSvc --> PessoasSvc
+
+' Conexões Services -> DTOs
+PessoasSvc ..> CreatePessoaDto : <<uses>>
+PessoasSvc ..> UpdatePessoaDto : <<uses>>
+RecadosSvc ..> CreateRecadoDto : <<uses>>
+RecadosSvc ..> UpdateRecadoDto : <<uses>>
+
+' Conexões Services -> Entities
+PessoasSvc --> PessoaEntity
+RecadosSvc --> RecadoEntity
+
+' Conexões Repositories -> Entities
+PessoaRepo --> PessoaEntity
+RecadoRepo --> RecadoEntity
+
+' Relacionamento entre Entities
+RecadoEntity --> PessoaEntity : <<references>>
+
+' Conexões Repositories -> Database
+PessoaRepo --> DB
+RecadoRepo --> DB
+
+@enduml

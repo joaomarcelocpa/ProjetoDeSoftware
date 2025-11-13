@@ -1,0 +1,132 @@
+@startuml
+title Diagrama de Sequência - Enviar Recado
+
+actor Remetente
+participant "Interface\nFrontend" as Frontend
+participant "Controller\nRecados" as Controller
+participant "Service\nRecados" as ServiceRecado
+participant "Service\nPessoas" as ServicePessoa
+participant "Banco de\nDados" as DB
+
+activate Remetente
+
+== 1. Acesso ao Formulário ==
+Remetente -> Frontend: 1.1: Acessa página "Novo Recado"
+activate Frontend
+Frontend -> ServicePessoa: 1.2: Buscar lista de pessoas
+activate ServicePessoa
+ServicePessoa -> DB: 1.3: SELECT * FROM pessoa
+activate DB
+DB --> ServicePessoa: 1.4: Lista de pessoas
+deactivate DB
+ServicePessoa --> Frontend: 1.5: Retorna pessoas
+deactivate ServicePessoa
+Frontend --> Remetente: 1.6: Exibe formulário com lista de pessoas
+deactivate Frontend
+
+== 2. Preenchimento do Formulário ==
+Remetente -> Frontend: 2.1: Seleciona remetente (deId)
+activate Frontend
+Frontend --> Remetente: 2.2: Filtra lista de destinatários
+deactivate Frontend
+
+Remetente -> Frontend: 2.3: Seleciona destinatário (paraId)
+activate Frontend
+Frontend --> Remetente: 2.4: Campo habilitado
+deactivate Frontend
+
+Remetente -> Frontend: 2.5: Digita mensagem (texto)
+activate Frontend
+Frontend --> Remetente: 2.6: Exibe contador de caracteres
+deactivate Frontend
+
+== 3. Validação e Envio ==
+Remetente -> Frontend: 3.1: Clica em "Enviar"
+activate Frontend
+Frontend -> Frontend: 3.2: Valida campos localmente\n(texto: 2-200 caracteres,\ndeId e paraId preenchidos,\ndeId ≠ paraId)
+
+alt 3.3: Validação falhou
+    Frontend --> Remetente: 3.4: Exibe mensagens de erro
+else 3.5: Validação bem-sucedida
+    Frontend -> Controller: 3.6: POST /recados\n{texto, deId, paraId}
+    activate Controller
+
+    == 4. Processamento no Backend ==
+    Controller -> Controller: 4.1: Valida dados com DTOs\n(class-validator)
+
+    alt 4.2: Validação DTO falhou
+        Controller --> Frontend: 4.3: HTTP 400\n{mensagens de erro}
+        Frontend --> Remetente: 4.4: Exibe erros
+    else 4.5: Validação DTO OK
+        Controller -> ServiceRecado: 4.6: create(createRecadoDto)
+        activate ServiceRecado
+
+        == 5. Verificação de Remetente ==
+        ServiceRecado -> ServicePessoa: 5.1: findOne(deId)
+        activate ServicePessoa
+        ServicePessoa -> DB: 5.2: SELECT * FROM pessoa\nWHERE id = deId
+        activate DB
+
+        alt 5.3: Remetente não encontrado
+            DB --> ServicePessoa: 5.4: null
+            deactivate DB
+            ServicePessoa --> ServiceRecado: 5.5: NotFoundException
+            deactivate ServicePessoa
+            ServiceRecado --> Controller: 5.6: Erro "Pessoa não encontrada"
+            Controller --> Frontend: 5.7: HTTP 404
+            Frontend --> Remetente: 5.8: Exibe erro
+        else 5.9: Remetente encontrado
+            DB --> ServicePessoa: 5.10: Dados do remetente
+            deactivate DB
+            ServicePessoa --> ServiceRecado: 5.11: Objeto Pessoa (de)
+            deactivate ServicePessoa
+
+            == 6. Verificação de Destinatário ==
+            ServiceRecado -> ServicePessoa: 6.1: findOne(paraId)
+            activate ServicePessoa
+            ServicePessoa -> DB: 6.2: SELECT * FROM pessoa\nWHERE id = paraId
+            activate DB
+
+            alt 6.3: Destinatário não encontrado
+                DB --> ServicePessoa: 6.4: null
+                deactivate DB
+                ServicePessoa --> ServiceRecado: 6.5: NotFoundException
+                deactivate ServicePessoa
+                ServiceRecado --> Controller: 6.6: Erro "Pessoa não encontrada"
+                Controller --> Frontend: 6.7: HTTP 404
+                Frontend --> Remetente: 6.8: Exibe erro
+            else 6.9: Destinatário encontrado
+                DB --> ServicePessoa: 6.10: Dados do destinatário
+                deactivate DB
+                ServicePessoa --> ServiceRecado: 6.11: Objeto Pessoa (para)
+                deactivate ServicePessoa
+
+                == 7. Criação do Recado ==
+                ServiceRecado -> ServiceRecado: 7.1: Monta objeto recado\n{texto, de, para,\nlido: false,\ndata: new Date()}
+
+                ServiceRecado -> DB: 7.2: INSERT INTO recado\n(texto, de, para, lido, data)
+                activate DB
+                DB --> ServiceRecado: 7.3: Recado criado com ID
+                deactivate DB
+
+                ServiceRecado -> ServiceRecado: 7.4: Formata resposta\n(retorna apenas IDs\nde remetente e destinatário)
+
+                ServiceRecado --> Controller: 7.5: Retorna recado criado
+                deactivate ServiceRecado
+
+                == 8. Resposta ao Cliente ==
+                Controller --> Frontend: 8.1: HTTP 201 Created\n{recado completo}
+                deactivate Controller
+
+                Frontend -> Frontend: 8.2: Redireciona para\n/recados
+
+                Frontend --> Remetente: 8.3: Exibe listagem\ncom recado enviado
+                deactivate Frontend
+            end
+        end
+    end
+end
+
+deactivate Remetente
+
+@enduml

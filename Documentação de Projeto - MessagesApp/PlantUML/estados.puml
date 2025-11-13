@@ -1,0 +1,76 @@
+@startuml
+title Diagrama de Estados - Recado
+
+[*] --> Rascunho : Remetente inicia criação
+
+Rascunho --> Validando : Preenche formulário\ne clica em enviar
+
+Validando --> Rascunho : Dados inválidos\n(texto muito curto/longo,\nremetente = destinatário)
+
+Validando --> Enviado : Validação OK\nRecado criado no BD
+
+Enviado --> NaoLido : [prioridade = NORMAL\nou IMPORTANTE]
+
+Enviado --> Urgente : [prioridade = URGENTE]
+
+Urgente --> NaoLido : Destinatário\nreconhece urgência
+
+NaoLido --> Lido : Destinatário\nvisualiza recado
+
+NaoLido --> NaoLido : Remetente edita texto\n(antes de ser lido)
+
+Lido --> NaoLido : Destinatário marca\ncomo não lido
+
+Lido --> Curtido : Destinatário\ncurte recado
+
+Curtido --> Lido : Destinatário\nremove curtida
+
+Lido --> Respondido : Destinatário\nenvia resposta
+
+Respondido --> Lido : Continua disponível\npara visualização
+
+NaoLido --> Arquivado : Destinatário\narquiva recado
+
+Lido --> Arquivado : Destinatário\narquiva recado
+
+Curtido --> Arquivado : Destinatário\narquiva recado
+
+Respondido --> Arquivado : Destinatário\narquiva recado
+
+Arquivado --> NaoLido : Destinatário\ndesarquiva
+
+Arquivado --> Lido : Destinatário\ndesarquiva
+
+Rascunho --> [*] : Remetente\ncancela criação
+
+NaoLido --> [*] : Excluído por\nRemetente ou Admin
+
+Lido --> [*] : Excluído por\nRemetente ou Admin
+
+Curtido --> [*] : Excluído por\nRemetente ou Admin
+
+Respondido --> [*] : Excluído por\nRemetente ou Admin
+
+Arquivado --> [*] : Excluído por\nRemetente ou Admin
+
+Urgente --> [*] : Excluído por\nRemetente ou Admin
+
+note right of Rascunho
+  Estado temporário
+  enquanto preenche
+  o formulário
+end note
+
+note right of Urgente
+  Recados urgentes
+  geram notificação
+  destacada
+end note
+
+note right of Arquivado
+  Removido da view
+  principal, mas
+  mantido no sistema
+end note
+
+@enduml

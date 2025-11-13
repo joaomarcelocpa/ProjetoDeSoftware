@@ -1,0 +1,144 @@
+@startuml
+title Diagrama de Pacotes - Backend (NestJS)
+
+package "Messages App - Backend" {
+
+    package "app" {
+        [AppModule] <<module>>
+    }
+
+    package "common" {
+        package "pipes" {
+            [ParseIntIdPipe] <<pipe>>
+        }
+    }
+
+    package "pessoas" {
+        package "module" {
+            [PessoasModule] <<module>>
+        }
+
+        package "controller" {
+            [PessoasController] <<controller>>
+        }
+
+        package "service" {
+            [PessoasService] <<service>>
+        }
+
+        package "entities" {
+            [Pessoa] <<entity>>
+        }
+
+        package "dto" {
+            [CreatePessoaDto] <<dto>>
+            [UpdatePessoaDto] <<dto>>
+        }
+    }
+
+    package "recados" {
+        package "module" as recadosModule {
+            [RecadosModule] <<module>>
+        }
+
+        package "controller" as recadosController {
+            [RecadosController] <<controller>>
+        }
+
+        package "service" as recadosService {
+            [RecadosService] <<service>>
+        }
+
+        package "entities" as recadosEntities {
+            [Recado] <<entity>>
+        }
+
+        package "dto" as recadosDto {
+            [CreateRecadoDto] <<dto>>
+            [UpdateRecadoDto] <<dto>>
+        }
+    }
+
+    package "TypeORM" <<framework>> {
+        [Repository<Pessoa>] <<repository>>
+        [Repository<Recado>] <<repository>>
+    }
+
+    package "PostgreSQL" <<database>> {
+        database "BD" {
+            [pessoa table]
+            [recado table]
+        }
+    }
+}
+
+' Dependências do AppModule
+[AppModule] ..> [PessoasModule] : <<import>>
+[AppModule] ..> [RecadosModule] : <<import>>
+
+' Dependências do PessoasModule
+[PessoasModule] ..> [PessoasController] : <<provides>>
+[PessoasModule] ..> [PessoasService] : <<provides>>
+[PessoasModule] ..> [Pessoa] : <<entity>>
+
+' Dependências do PessoasController
+[PessoasController] ..> [PessoasService] : <<uses>>
+[PessoasController] ..> [CreatePessoaDto] : <<uses>>
+[PessoasController] ..> [UpdatePessoaDto] : <<uses>>
+[PessoasController] ..> [ParseIntIdPipe] : <<uses>>
+
+' Dependências do PessoasService
+[PessoasService] ..> [Repository<Pessoa>] : <<injects>>
+[PessoasService] ..> [Pessoa] : <<uses>>
+[PessoasService] ..> [CreatePessoaDto] : <<uses>>
+[PessoasService] ..> [UpdatePessoaDto] : <<uses>>
+
+' Dependências do RecadosModule
+[RecadosModule] ..> [RecadosController] : <<provides>>
+[RecadosModule] ..> [RecadosService] : <<provides>>
+[RecadosModule] ..> [Recado] : <<entity>>
+[RecadosModule] ..> [PessoasModule] : <<import>>
+
+' Dependências do RecadosController
+[RecadosController] ..> [RecadosService] : <<uses>>
+[RecadosController] ..> [CreateRecadoDto] : <<uses>>
+[RecadosController] ..> [UpdateRecadoDto] : <<uses>>
+[RecadosController] ..> [ParseIntIdPipe] : <<uses>>
+
+' Dependências do RecadosService
+[RecadosService] ..> [Repository<Recado>] : <<injects>>
+[RecadosService] ..> [PessoasService] : <<uses>>
+[RecadosService] ..> [Recado] : <<uses>>
+[RecadosService] ..> [CreateRecadoDto] : <<uses>>
+[RecadosService] ..> [UpdateRecadoDto] : <<uses>>
+
+' Relacionamento entre Entidades
+[Recado] ..> [Pessoa] : <<references>>
+
+' Dependências do TypeORM com Banco
+[Repository<Pessoa>] ..> [pessoa table] : <<persists>>
+[Repository<Recado>] ..> [recado table] : <<persists>>
+
+note right of [AppModule]
+  Módulo raiz da aplicação
+  Importa e configura todos
+  os módulos do sistema
+end note
+
+note right of [PessoasModule]
+  Módulo responsável pelo
+  gerenciamento de pessoas
+end note
+
+note right of [RecadosModule]
+  Módulo responsável pelo
+  gerenciamento de recados
+  Depende do PessoasModule
+end note
+
+note bottom of [PostgreSQL]
+  Banco de dados relacional
+  com relacionamento entre
+  pessoa e recado (1:N)
+end note
+@enduml

@@ -1,0 +1,129 @@
+@startuml
+title Diagrama de Sequência - Recebimento e Interação com Recado (Destinatário)
+
+actor Destinatário
+participant "Interface\nFrontend" as Frontend
+participant "Controller\nRecados" as Controller
+participant "Service\nRecados" as ServiceRecado
+participant "Service\nNotificações" as ServiceNotif
+participant "Banco de\nDados" as DB
+
+activate Destinatário
+
+== 1. Acesso à Caixa de Entrada ==
+Destinatário -> Frontend: 1.1: Acessa página "Recados"
+activate Frontend
+Frontend -> Controller: 1.2: GET /recados
+activate Controller
+Controller -> ServiceRecado: 1.3: buscarTodos()
+activate ServiceRecado
+ServiceRecado -> DB: 1.4: SELECT * FROM recado\nWHERE para = destinatárioId\nORDER BY data DESC
+activate DB
+DB --> ServiceRecado: 1.5: Lista de recados
+deactivate DB
+ServiceRecado --> Controller: 1.6: Retorna recados
+deactivate ServiceRecado
+Controller --> Frontend: 1.7: HTTP 200 (recados)
+deactivate Controller
+
+Frontend -> ServiceNotif: 1.8: GET /notificacoes
+activate ServiceNotif
+ServiceNotif -> DB: 1.9: SELECT * FROM notificacao\nWHERE pessoaId = destinatárioId\nAND lida = false
+activate DB
+DB --> ServiceNotif: 1.10: Notificações não lidas
+deactivate DB
+ServiceNotif --> Frontend: 1.11: Lista de notificações
+deactivate ServiceNotif
+
+Frontend --> Destinatário: 1.12: Exibe recados com\ncontador de não lidos\ne notificações
+deactivate Frontend
+
+== 2. Filtrar Recados ==
+Destinatário -> Frontend: 2.1: Seleciona filtro\n(não lidos / prioridade)
+activate Frontend
+Frontend -> Frontend: 2.2: Filtra recados\nlocalmente
+Frontend --> Destinatário: 2.3: Exibe recados filtrados
+deactivate Frontend
+
+== 3. Visualizar Recado Detalhado ==
+Destinatário -> Frontend: 3.1: Clica em recado
+activate Frontend
+Frontend -> Controller: 3.2: GET /recados/{id}
+activate Controller
+Controller -> ServiceRecado: 3.3: buscarPorId(id)
+activate ServiceRecado
+ServiceRecado -> DB: 3.4: SELECT * FROM recado\nWHERE id = {id}
+activate DB
+DB --> ServiceRecado: 3.5: Dados do recado
+deactivate DB
+
+== 4. Marcar como Lido Automaticamente ==
+ServiceRecado -> ServiceRecado: 4.1: Verifica se lido = false
+
+alt 4.2: Recado não lido
+    ServiceRecado -> DB: 4.3: UPDATE recado\nSET lido = true\nWHERE id = {id}
+    activate DB
+    DB --> ServiceRecado: 4.4: Recado atualizado
+    deactivate DB
+
+    ServiceRecado -> ServiceNotif: 4.5: marcarNotificacaoComoLida(recadoId)
+    activate ServiceNotif
+    ServiceNotif -> DB: 4.6: UPDATE notificacao\nSET lida = true\nWHERE recadoId = {id}
+    activate DB
+    DB --> ServiceNotif: 4.7: Notificação atualizada
+    deactivate DB
+    ServiceNotif --> ServiceRecado: 4.8: OK
+    deactivate ServiceNotif
+end
+
+ServiceRecado --> Controller: 4.9: Retorna recado atualizado
+deactivate ServiceRecado
+Controller --> Frontend: 4.10: HTTP 200 (recado)
+deactivate Controller
+Frontend --> Destinatário: 4.11: Exibe recado completo\ncom status "lido"
+deactivate Frontend
+
+== 5. Responder Recado ==
+Destinatário -> Frontend: 5.1: Clica em "Responder"
+activate Frontend
+Frontend --> Destinatário: 5.2: Abre formulário\nde resposta
+deactivate Frontend
+
+Destinatário -> Frontend: 5.3: Digita resposta
+activate Frontend
+Frontend --> Destinatário: 5.4: Exibe contador\nde caracteres
+deactivate Frontend
+
+Destinatário -> Frontend: 5.5: Clica em "Enviar Resposta"
+activate Frontend
+Frontend -> Frontend: 5.6: Valida texto\n(2-200 caracteres)
+
+Frontend -> Controller: 5.7: POST /recados\n{texto, deId: destinatárioId,\nparaId: remetenteId,\nrecadoOriginalId}
+activate Controller
+Controller -> ServiceRecado: 5.8: criar(createRecadoDto)
+activate ServiceRecado
+
+ServiceRecado -> DB: 5.9: INSERT INTO recado\n(texto, de, para,\nrecadoOriginalId, data)
+activate DB
+DB --> ServiceRecado: 5.10: Resposta criada
+deactivate DB
+
+ServiceRecado -> ServiceNotif: 5.11: criarNotificacao\n(remetente, "resposta")
+activate ServiceNotif
+ServiceNotif -> DB: 5.12: INSERT INTO notificacao
+activate DB
+DB --> ServiceNotif: 5.13: Notificação criada
+deactivate DB
+ServiceNotif --> ServiceRecado: 5.14: OK
+deactivate ServiceNotif
+
+ServiceRecado --> Controller: 5.15: Resposta enviada
+deactivate ServiceRecado
+Controller --> Frontend: 5.16: HTTP 201 Created
+deactivate Controller
+Frontend --> Destinatário: 5.17: Exibe thread\nde conversação
+deactivate Frontend
+
+deactivate Destinatário
+
+@enduml

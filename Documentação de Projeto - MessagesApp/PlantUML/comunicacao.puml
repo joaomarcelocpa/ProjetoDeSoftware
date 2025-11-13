@@ -1,0 +1,72 @@
+@startuml
+title Diagrama de Comunicação - Enviar Recado
+
+actor Remetente
+participant "Frontend" as Frontend
+participant "RecadosController" as Controller
+participant "RecadosService" as Service
+participant "PessoasService" as PessoaService
+database "Banco de Dados" as DB
+
+note across: Fluxo Principal: Criação e Envio de Recado
+
+Remetente -> Frontend: 1 acessarFormulario()
+Frontend -> PessoaService: 2 listarPessoas()
+PessoaService -> DB: 3 SELECT * FROM pessoa
+DB --> PessoaService: 4 retornarListaPessoas(listaPessoas)
+PessoaService --> Frontend: 5 exibirListaPessoas(listaPessoas)
+Frontend --> Remetente: 6 exibirFormulario(listaPessoas)
+
+Remetente -> Frontend: 7 preencherFormulario(texto, deId, paraId)
+Frontend -> Frontend: 8 validarDados(texto, deId, paraId)
+
+Remetente -> Frontend: 9 clicarEnviar()
+Frontend -> Controller: 10 POST /recados(texto, deId, paraId)
+Controller -> Service: 11 criar(createRecadoDto)
+
+Service -> PessoaService: 12 buscarPorId(deId)
+PessoaService -> DB: 13 SELECT * FROM pessoa WHERE id = deId
+DB --> PessoaService: 14 retornarRemetente(remetente)
+PessoaService --> Service: 15 retornarPessoa(remetente)
+
+Service -> PessoaService: 16 buscarPorId(paraId)
+PessoaService -> DB: 17 SELECT * FROM pessoa WHERE id = paraId
+DB --> PessoaService: 18 retornarDestinatario(destinatario)
+PessoaService --> Service: 19 retornarPessoa(destinatario)
+
+Service -> DB: 20 INSERT INTO recado(texto, de, para, lido, data)
+DB --> Service: 21 recadoCriado(recadoId)
+
+Service --> Controller: 22 retornarRecado(recado)
+Controller --> Frontend: 23 HTTP 201 Created(recado)
+Frontend --> Remetente: 24 exibirConfirmacao(recado)
+
+note across: Fluxo Alternativo: Validação Falhou
+
+ref over Frontend, Remetente
+alt [Validação de dados falhou]
+  Frontend --> Remetente: 8.1 exibirErrosValidacao(erros)
+  note right: Retorna ao preenchimento do formulário
+end
+
+
+note across: Fluxo Alternativo: Pessoa Não Encontrada
+
+ref over Service, DB
+alt [Remetente não encontrado]
+  PessoaService --> Service: 15.1 lancarErro("Pessoa não encontrada")
+  Service --> Controller: 22.1 retornarErro(404)
+  Controller --> Frontend: 23.1 HTTP 404 Not Found
+  Frontend --> Remetente: 24.1 exibirErro("Remetente não encontrado")
+end
+
+
+ref over Service, DB
+alt [Destinatário não encontrado]
+  PessoaService --> Service: 19.1 lancarErro("Pessoa não encontrada")
+  Service --> Controller: 22.2 retornarErro(404)
+  Controller --> Frontend: 23.2 HTTP 404 Not Found
+  Frontend --> Remetente: 24.2 exibirErro("Destinatário não encontrado")
+end
+
+@enduml
