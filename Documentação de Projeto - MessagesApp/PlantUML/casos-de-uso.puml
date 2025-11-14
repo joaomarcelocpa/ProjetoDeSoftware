@@ -1,0 +1,65 @@
+@startuml Diagrama_Casos_de_Uso_Messages_App
+
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor LightBlue
+  BorderColor DarkBlue
+}
+
+actor "Remetente" as sender
+actor "Destinatário" as receiver
+actor "Administrador" as admin
+
+package "Messages App" {
+
+  ' Linha superior - casos comuns
+  usecase "UC-01\nRealizar login" as UC01
+
+  ' Casos do Remetente (lado esquerdo superior)
+  usecase "UC-02\nEnviar Recados" as UC02
+  usecase "UC-03\nVisualizar status de\nrecados" as UC03
+
+  ' Casos compartilhados (centro)
+  usecase "UC-04\nVisualizar histórico" as UC04
+
+  ' Casos do Destinatário (lado direito)
+  usecase "UC-07\nFiltrar recados" as UC07
+  usecase "UC-08\nResponder recados" as UC08
+  usecase "UC-09\nMarcar recados\ncomo lidos" as UC09
+
+  ' Casos do Administrador (lado direito inferior)
+  usecase "UC-05\nGerenciar usuários" as UC05
+  usecase "UC-06\nVisualizar estatísticas" as UC06
+  usecase "UC-10\nGerar relatórios" as UC10
+}
+
+' Posicionamento manual para melhor layout
+UC02 -[hidden]- UC03
+UC03 -[hidden]- UC04
+UC07 -[hidden]- UC08
+UC08 -[hidden]- UC09
+UC05 -[hidden]- UC06
+UC06 -[hidden]- UC10
+
+' Relacionamentos do Remetente
+sender --> UC02
+sender --> UC03
+sender --> UC04
+sender --> UC01
+
+' Relacionamentos do Destinatário
+receiver --> UC04
+receiver --> UC07
+receiver --> UC08
+receiver --> UC09
+receiver --> UC01
+
+' Relacionamentos do Administrador
+admin --> UC05
+admin --> UC06
+admin --> UC01
+
+' Relacionamento de extensão
+UC06 ..> UC10 : <<extends>>
+
+@enduml
